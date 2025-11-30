@@ -92,6 +92,21 @@
     .footer{padding:1rem; text-align:center; color:var(--muted); font-size:.85rem}
     .actions-cell{display:flex; gap:.4rem; justify-content:center; flex-wrap:wrap}
     .hint{font-size:.85rem; color:var(--muted)}
+    .dashboard-grid{display:grid; grid-template-columns:1fr; gap:.75rem; margin-top:1rem}
+    @media (min-width:640px){ .dashboard-grid{grid-template-columns:1fr 1fr} }
+    .dashboard-card{background:var(--card); border-radius:12px; padding:1rem; border:1px solid var(--border)}
+    .dashboard-card h3{margin:0 0 .5rem; font-size:1rem}
+    .dashboard-card .value{font-size:1.5rem; font-weight:800; color:var(--accent)}
+    .quick-actions{display:grid; grid-template-columns:1fr 1fr; gap:.5rem; margin-top:1rem}
+    .quick-action-btn{background:var(--card); border:1px solid var(--border); border-radius:8px; padding:.7rem; text-align:center; cursor:pointer}
+    .quick-action-btn:hover{background:#f0f0f0}
+    .quick-action-btn .icon{font-size:1.2rem; margin-bottom:.3rem}
+    .quick-action-btn .label{font-size:.8rem; font-weight:600}
+    .fast-entry{display:grid; grid-template-columns:2fr 1fr 1fr; gap:.5rem; align-items:end; margin-bottom:.5rem}
+    .fast-entry .player-name{font-weight:600; padding:.5rem 0}
+    .fast-entry select{padding:.5rem .4rem; font-size:.85rem}
+    .fast-entry .actions{display:flex; gap:.3rem}
+    .fast-entry .actions button{padding:.4rem .6rem; font-size:.8rem}
   </style>
 </head>
 <body>
@@ -107,15 +122,67 @@
 
 <main>
   <div class="nav">
-    <button class="active" data-tab="players">إضافة اللاعبين</button>
+    <button class="active" data-tab="dashboard">لوحة التحكم</button>
+    <button data-tab="players">إضافة اللاعبين</button>
     <button data-tab="round">إدارة الجولة</button>
     <button data-tab="points">النقاط والبطاقات</button>
-    <button data-tab="elimination">الإقصاء</button>
     <button data-tab="help">تعليمات موسعة</button>
   </div>
 
+  <!-- لوحة التحكم -->
+  <section class="card" id="tab-dashboard">
+    <h2>لوحة التحكم الرئيسية</h2>
+    <div class="dashboard-grid">
+      <div class="dashboard-card">
+        <h3>عدد اللاعبين</h3>
+        <div class="value" id="dashboard-player-count">0</div>
+      </div>
+      <div class="dashboard-card">
+        <h3>الجولة الحالية</h3>
+        <div class="value" id="dashboard-round">1</div>
+      </div>
+      <div class="dashboard-card">
+        <h3>أعلى نقاط</h3>
+        <div class="value" id="dashboard-top-score">0</div>
+        <div class="small" id="dashboard-top-player">لا يوجد</div>
+      </div>
+      <div class="dashboard-card">
+        <h3>البطاقات المستخدمة</h3>
+        <div class="value" id="dashboard-cards-used">0</div>
+      </div>
+    </div>
+    
+    <div class="quick-actions">
+      <div class="quick-action-btn" data-action="add-players">
+        <div class="icon">👤</div>
+        <div class="label">إضافة لاعبين</div>
+      </div>
+      <div class="quick-action-btn" data-action="start-round">
+        <div class="icon">🔄</div>
+        <div class="label">بدء جولة</div>
+      </div>
+      <div class="quick-action-btn" data-action="manage-round">
+        <div class="icon">⚔️</div>
+        <div class="label">إدارة الجولة</div>
+      </div>
+      <div class="quick-action-btn" data-action="view-points">
+        <div class="icon">📊</div>
+        <div class="label">عرض النقاط</div>
+      </div>
+    </div>
+    
+    <div class="card" style="margin-top:1rem">
+      <h2>الإجراءات السريعة</h2>
+      <div class="stack">
+        <button class="btn primary" id="quick-start-game">بدء اللعبة</button>
+        <button class="btn ghost" id="quick-next-round">جولة جديدة</button>
+        <button class="btn success" id="quick-calculate">حساب النقاط</button>
+      </div>
+    </div>
+  </section>
+
   <!-- إضافة اللاعبين -->
-  <section class="card" id="tab-players">
+  <section class="card" id="tab-players" style="display:none">
     <h2>إضافة اللاعبين</h2>
     <div class="row row-2">
       <div>
@@ -146,11 +213,14 @@
       <button class="btn ghost" id="newRoundBtn">بدء جولة جديدة</button>
     </div>
 
-    <div id="decisionsContainer" class="grid grid-2"></div>
-
-    <div style="margin-top:1rem" class="stack">
-      <button class="btn primary" id="finalizeBtn">إعلان النتائج وحساب النقاط</button>
-      <button class="btn ghost" id="resetDecisionsBtn">مسح القرارات</button>
+    <div class="card">
+      <h2>إدخال سريع للقرارات</h2>
+      <div class="hint">أدخل قرارات جميع اللاعبين بسرعة ثم انقر "إعلان النتائج" لحساب كل شيء تلقائيًا</div>
+      <div id="fastEntryContainer"></div>
+      <div class="stack" style="margin-top:.5rem">
+        <button class="btn primary" id="finalizeBtn">إعلان النتائج وحساب النقاط</button>
+        <button class="btn ghost" id="resetDecisionsBtn">مسح القرارات</button>
+      </div>
     </div>
 
     <div class="card" style="margin-top:1rem">
@@ -175,44 +245,10 @@
             <th>تحالفات وفاء</th>
             <th>صفقات تجارة</th>
             <th>بطاقات</th>
-            <th>استخدام بطاقة</th>
           </tr>
         </thead>
         <tbody></tbody>
       </table>
-    </div>
-  </section>
-
-  <!-- الإقصاء -->
-  <section class="card" id="tab-elimination" style="display:none">
-    <h2>الإقصاء</h2>
-    <div class="hint">الإقصاء يطبق بنهاية الجولة وفق معايير عادلة. اختر معيارًا أو استخدم التحقق التلقائي.</div>
-    <div class="row row-2" style="margin-top:.75rem">
-      <div>
-        <label>المعيار</label>
-        <select id="elimCriterion">
-          <option value="auto">تحقق تلقائي (هجومان ناجحان في نفس الجولة ← إقصاء)</option>
-          <option value="lowestTwoRounds">الأقل نقاطًا لجولتين متتاليتين</option>
-          <option value="failedBetrayTwice">خيانة مُعلنة فاشلة مرتين خلال ثلاث جولات</option>
-          <option value="manualVote">تصويت محدود (يدوي)</option>
-        </select>
-      </div>
-      <div>
-        <label>مرشح الإقصاء (اختياري)</label>
-        <select id="elimCandidate">
-          <option value="">— اختر لاعبًا (للمعايير اليدوية) —</option>
-        </select>
-      </div>
-    </div>
-    <div class="stack" style="margin-top:.75rem">
-      <button class="btn warn" id="checkEliminationBtn">تحقق/نفّذ الإقصاء</button>
-    </div>
-    <div class="card" style="margin-top:1rem">
-      <h2>نص إعلان الإقصاء</h2>
-      <textarea id="elimText" readonly placeholder="سيظهر هنا نص الإقصاء إن تحقق..."></textarea>
-      <div class="stack" style="margin-top:.6rem">
-        <button class="btn primary" id="copyElimBtn">نسخ نص الإقصاء</button>
-      </div>
     </div>
   </section>
 
@@ -228,7 +264,7 @@
         <li class="item"><span class="name">النقاش العلني</span><span class="small">ابنِ سردك: تفاوض، هدّد، شوّش. ما تقوله علنًا لا يساوي التنفيذ السري.</span></li>
         <li class="item"><span class="name">الإرسال السري</span><span class="small">أرسل قرارك للمشرف في الخاص بدقة (الفعل + الهدف/الشريك).</span></li>
         <li class="item"><span class="name">النقاط</span><span class="small">هجوم ناجح +2 (أو +4 مع بطاقة)، تحالف متبادل +1 لكل طرف، تجارة متبادلة +1 (أو +2 مع بطاقة).</span></li>
-        <li class="item"><span class="name">البطاقات بالإنجاز</span><span class="small">هجومين متتالين ← هجوم مضاعف، تحالفين وفاء ← حصانة، ثلاث تجارات ← تاجر، خيانة مُعلنة ناجحة ← خيانة ذهبية.</span></li>
+        <li class="item"><span class="name">البطاقات بالإنجاز</span><span class="small">هجومين متتالين ← هجوم مضاعف، تحالفين وفاء ← حصانة، ثلاث تجارات ← تاجر، خيانة ناجحة ← كشف.</span></li>
         <li class="item"><span class="name">استراتيجيات</span><span class="small">ابنِ سمعة، شوّش النوايا، اقرأ خصومك، ووازن المخاطر.</span></li>
       </ul>
     </div>
@@ -240,9 +276,9 @@
         <li class="item"><span class="name">قواعد التحالف</span><span class="small">لا نقطة إلا إذا كان التحالف متبادلًا سرًا. يمنع الهجمات على الطرفين في تلك الجولة.</span></li>
         <li class="item"><span class="name">قواعد التجارة</span><span class="small">نقطة لكل طرف عند التبادل المتبادل. مع بطاقة التاجر تصبح نقطتين.</span></li>
         <li class="item"><span class="name">قواعد الهجوم</span><span class="small">يفشل الهجوم إن كان الهدف متحالفًا أو استخدم حصانة. ينجح إن لم يكن محميًا.</span></li>
-        <li class="item"><span class="name">قواعد الخيانة</span><span class="small">لا تُعتبر خيانة إلا إذا أعلن اللاعب التحالف علنًا ثم أرسل "خيانة" مع هجوم. إن نجحت تُمنح الخيانة الذهبية.</span></li>
-        <li class="item"><span class="name">الإقصاء</span><span class="small">بنهاية الجولة: هجومان ناجحان على نفس اللاعب ← إقصاء تلقائي. بدائل: الأقل نقاطًا لجولتين، أو خيانة مُعلنة فاشلة مرتين خلال ثلاث جولات، أو تصويت محدود.</span></li>
-        <li class="item"><span class="name">نصوص الإعلان</span><span class="small">استخدم النصوص الجاهزة من صفحة الجولة والإقصاء واقرأها في الغرفة بعد النسخ.</span></li>
+        <li class="item"><span class="name">قواعد الخيانة</span><span class="small">لا تُعتبر خيانة إلا إذا أعلن اللاعب التحالف علنًا ثم أرسل "خيانة" مع هجوم.</span></li>
+        <li class="item"><span class="name">البطاقات التلقائية</span><span class="small">جميع البطاقات تُفعّل تلقائيًا في الجولة التالية للحصول عليها وتُستهلك بعد استخدامها.</span></li>
+        <li class="item"><span class="name">الإقصاء التلقائي</span><span class="small">يتم الإقصاء تلقائيًا في حالتين: 1) تعرض لاعب لهجومين ناجحين في نفس الجولة 2) الأقل نقاطًا في كل جولتين متتاليتين (بدءًا من الجولة الثانية).</span></li>
       </ul>
     </div>
 
@@ -250,9 +286,9 @@
       <h2>حالات خاصة</h2>
       <ul class="list">
         <li class="item"><span class="name">هجومان متقابلان</span><span class="small">يُقيّم كل هجوم مستقلًا وفق حماية الهدف.</span></li>
-        <li class="item"><span class="name">خيانة بدون إعلان</span><span class="small">يُعامل كهجوم عادي؛ لا بطاقة خيانة ذهبية.</span></li>
-        <li class="item"><span class="name">التعادل في الإقصاء</span><span class="small">إذا تعادل القاع، ألغِ الإقصاء أو أجرِ مواجهة كلامية قصيرة يقررها المشرف.</span></li>
-        <li class="item"><span class="name">بطاقة واحدة لكل جولة</span><span class="small">الاستخدام يُستهلك البطاقة (حصانة/هجوم مضاعف/تاجر/كشف).</span></li>
+        <li class="item"><span class="name">خيانة بدون إعلان</span><span class="small">يُعامل كهجوم عادي.</span></li>
+        <li class="item"><span class="name">التعادل في الإقصاء</span><span class="small">إذا تعادل القاع، يُقصى جميع المتعادلين في حالة الأقل نقاطًا لجولتين.</span></li>
+        <li class="item"><span class="name">تفعيل البطاقات</span><span class="small">جميع البطاقات تُفعّل تلقائيًا في الجولة التالية للحصول عليها.</span></li>
       </ul>
     </div>
   </section>
@@ -272,21 +308,21 @@
     attacksThisRound: [], // {attackerId,targetId,success}
     // بطاقات
     cardsCatalog: {
-      shield: { key:'shield', name:'بطاقة الحصانة', desc:'منع هجوم واحد في هذه الجولة' },
-      doubleAttack: { key:'doubleAttack', name:'بطاقة الهجوم المضاعف', desc:'هجوم ناجح يمنح 4 نقاط بدل 2' },
-      doubleTrade: { key:'doubleTrade', name:'بطاقة التاجر', desc:'تجارة ناجحة تمنح نقطتين' },
-      reveal: { key:'reveal', name:'بطاقة الكشف', desc:'كشف قرار لاعب واحد قبل الإعلان (مرجعية للمشرف فقط)' },
-      goldenBetrayal: { key:'goldenBetrayal', name:'بطاقة الخيانة الذهبية', desc:'تمنح عند خيانة مُعلنة مع هجوم ناجح' }
-    }
+      shield: { key:'shield', name:'بطاقة الحصانة', desc:'تمنع هجومًا واحدًا ضدك في الجولة التالية' },
+      doubleAttack: { key:'doubleAttack', name:'بطاقة الهجوم المضاعف', desc:'تضاعف نقاط الهجوم الناجح من 2 إلى 4 نقاط' },
+      doubleTrade: { key:'doubleTrade', name:'بطاقة التاجر', desc:'تضاعف نقاط التجارة الناجحة من 1 إلى 2 نقاط' },
+      reveal: { key:'reveal', name:'بطاقة الكشف', desc:'تتيح للمشرف كشف قرار لاعب واحد قبل الإعلان' }
+    },
+    cardsToActivate: new Map() // playerId -> [cardKeys] البطاقات التي ستُفعّل في الجولة التالية
   };
 
   // عناصر DOM
   const tabs = document.querySelectorAll('.nav button');
   const sections = {
+    dashboard: document.getElementById('tab-dashboard'),
     players: document.getElementById('tab-players'),
     round: document.getElementById('tab-round'),
     points: document.getElementById('tab-points'),
-    elimination: document.getElementById('tab-elimination'),
     help: document.getElementById('tab-help')
   };
   const playerNameInput = document.getElementById('playerName');
@@ -296,7 +332,7 @@
   const playersCountInfo = document.getElementById('playersCountInfo');
   const startGameBtn = document.getElementById('startGameBtn');
 
-  const decisionsContainer = document.getElementById('decisionsContainer');
+  const fastEntryContainer = document.getElementById('fastEntryContainer');
   const finalizeBtn = document.getElementById('finalizeBtn');
   const resetDecisionsBtn = document.getElementById('resetDecisionsBtn');
   const resultsText = document.getElementById('resultsText');
@@ -306,15 +342,24 @@
 
   const pointsTableBody = document.querySelector('#pointsTable tbody');
 
-  const elimCriterionSel = document.getElementById('elimCriterion');
-  const elimCandidateSel = document.getElementById('elimCandidate');
-  const checkEliminationBtn = document.getElementById('checkEliminationBtn');
-  const elimText = document.getElementById('elimText');
-  const copyElimBtn = document.getElementById('copyElimBtn');
+  // لوحة التحكم
+  const dashboardPlayerCount = document.getElementById('dashboard-player-count');
+  const dashboardRound = document.getElementById('dashboard-round');
+  const dashboardTopScore = document.getElementById('dashboard-top-score');
+  const dashboardTopPlayer = document.getElementById('dashboard-top-player');
+  const dashboardCardsUsed = document.getElementById('dashboard-cards-used');
+  const quickStartGameBtn = document.getElementById('quick-start-game');
+  const quickNextRoundBtn = document.getElementById('quick-next-round');
+  const quickCalculateBtn = document.getElementById('quick-calculate');
 
   // تبديل التبويبات
   tabs.forEach(btn=>{
     btn.addEventListener('click', ()=>{
+      // حفظ القرارات قبل الخروج من صفحة الجولة
+      if (document.getElementById('tab-round').style.display !== 'none') {
+        saveDecisionsFromForm();
+      }
+      
       tabs.forEach(b=>b.classList.remove('active'));
       btn.classList.add('active');
       const tab = btn.dataset.tab;
@@ -322,8 +367,8 @@
         sections[k].style.display = (k===tab?'block':'none');
       });
       if(tab==='points') renderPointsTable();
-      if(tab==='round') { renderDecisionsForm(); roundNumberEl.textContent = state.round; }
-      if(tab==='elimination') { renderEliminationOptions(); }
+      if(tab==='round') { renderFastEntryForm(); roundNumberEl.textContent = state.round; }
+      if(tab==='dashboard') updateDashboard();
     });
   });
 
@@ -340,7 +385,7 @@
     });
     playerNameInput.value='';
     renderPlayersList();
-    renderEliminationOptions();
+    updateDashboard();
   });
 
   // تفويض تعديل/إزالة اللاعبين
@@ -354,9 +399,9 @@
       if(newName && newName.trim()){
         state.players[index].name = newName.trim();
         renderPlayersList();
-        renderDecisionsForm();
+        renderFastEntryForm();
         renderPointsTable();
-        renderEliminationOptions();
+        updateDashboard();
       }
     } else if(action==='remove'){
       if(confirm("هل تريد إزالة هذا اللاعب؟")){
@@ -368,9 +413,9 @@
           if(d.announcedAllianceWithId===removed.id) d.announcedAllianceWithId = null;
         });
         renderPlayersList();
-        renderDecisionsForm();
+        renderFastEntryForm();
         renderPointsTable();
-        renderEliminationOptions();
+        updateDashboard();
       }
     }
   });
@@ -383,13 +428,13 @@
     state.round = 1;
     state.lastRoundPointsSnapshot.clear();
     state.attacksThisRound = [];
+    state.cardsToActivate.clear();
     resultsText.value='';
-    elimText.value='';
     roundNumberEl.textContent = state.round;
     renderPlayersList();
-    decisionsContainer.innerHTML='';
+    fastEntryContainer.innerHTML='';
     pointsTableBody.innerHTML='';
-    renderEliminationOptions();
+    updateDashboard();
   });
 
   // بدء الجولة الأولى
@@ -405,7 +450,12 @@
     state.attacksThisRound = [];
     resultsText.value='';
     roundNumberEl.textContent = state.round;
-    renderDecisionsForm();
+    
+    // تفعيل البطاقات للجولة الجديدة
+    activateCardsForNewRound();
+    
+    renderFastEntryForm();
+    updateDashboard();
   });
 
   // نسخ النتائج
@@ -415,66 +465,103 @@
     alert('تم نسخ النتائج كنص جاهز.');
   });
 
-  // نسخ الإقصاء
-  copyElimBtn.addEventListener('click', ()=>{
-    elimText.select();
-    document.execCommand('copy');
-    alert('تم نسخ نص الإقصاء.');
-  });
-
   // مسح القرارات
   resetDecisionsBtn.addEventListener('click', ()=>{
     if(!confirm('مسح جميع القرارات لهذه الجولة؟')) return;
     state.decisions.clear();
-    decisionsContainer.querySelectorAll('.card').forEach(card=>{
-      card.querySelector('select[data-field="action"]').value = '';
-      card.querySelector('select[data-field="target"]').value = '';
-      card.querySelector('select[data-field="announce"]').value = '';
-      card.querySelector('select[data-field="useCard"]').value = '';
-    });
+    renderFastEntryForm();
     resultsText.value='';
   });
 
   // إعلان النتائج: يحفظ جميع القرارات تلقائيًا ثم يحسب
   finalizeBtn.addEventListener('click', ()=>{
     if(state.players.length < 2) return alert('أضف لاعبين كفاية (على الأقل 2)');
-    // حفظ تلقائي للقرارات من الواجهة
-    decisionsContainer.querySelectorAll('.card').forEach(card=>{
-      const pid = card.dataset.pid;
-      const action = card.querySelector('select[data-field="action"]').value;
-      const targetId = card.querySelector('select[data-field="target"]').value || null;
-      const announceId = card.querySelector('select[data-field="announce"]').value || null;
-      const useCard = card.querySelector('select[data-field="useCard"]').value || null;
-      state.decisions.set(pid, {action,targetId,announcedAllianceWithId:announceId,usesCard:useCard});
-    });
+    
+    // حفظ تلقائي للقرارات من الواجهة السريعة
+    saveDecisionsFromForm();
 
     // حساب النتائج
     const calc = computeResults();
     resultsText.value = calc.text;
     applyPoints(calc);
     awardCards(calc);
+    
+    // الإقصاء التلقائي
+    const eliminationResults = performAutoElimination();
+    if (eliminationResults) {
+      resultsText.value += "\n\n" + eliminationResults;
+    }
+    
     renderPointsTable();
     // لقطة نقاط هذه الجولة لأغراض "الأقل نقاطًا لجولتين"
     state.lastRoundPointsSnapshot = new Map(state.players.map(p=>[p.id,p.points]));
-    alert('تم حساب النتائج وتحديث النقاط.');
-
-    // تحضير صفحة الإقصاء
-    renderEliminationOptions();
+    alert('تم حساب النتائج وتحديث النقاط والإقصاء التلقائي.');
+    updateDashboard();
   });
 
-  // الإقصاء: تحقق/تنفيذ
-  checkEliminationBtn.addEventListener('click', ()=>{
-    const message = performElimination();
-    elimText.value = message || 'لا يوجد إقصاء وفق المعايير الحالية.';
-    if(message) {
-      renderPlayersList();
-      renderDecisionsForm();
-      renderPointsTable();
-      renderEliminationOptions();
-      alert('تم تنفيذ الإقصاء.');
-    } else {
-      alert('لا تنطبق شروط الإقصاء الآن.');
-    }
+  // الإجراءات السريعة
+  quickStartGameBtn.addEventListener('click', ()=>{
+    if(state.players.length < 2) return alert('أضف لاعبين كفاية (على الأقل 2)');
+    switchTab('round');
+  });
+
+  quickNextRoundBtn.addEventListener('click', ()=>{
+    state.round += 1;
+    state.decisions.clear();
+    state.attacksThisRound = [];
+    resultsText.value='';
+    roundNumberEl.textContent = state.round;
+    
+    // تفعيل البطاقات للجولة الجديدة
+    activateCardsForNewRound();
+    
+    renderFastEntryForm();
+    updateDashboard();
+    switchTab('round');
+  });
+
+  quickCalculateBtn.addEventListener('click', ()=>{
+    switchTab('round');
+    setTimeout(() => {
+      finalizeBtn.click();
+    }, 300);
+  });
+
+  // أزرار الإجراءات السريعة
+  document.querySelectorAll('.quick-action-btn').forEach(btn => {
+    btn.addEventListener('click', () => {
+      // حفظ القرارات قبل الخروج من صفحة الجولة
+      if (document.getElementById('tab-round').style.display !== 'none') {
+        saveDecisionsFromForm();
+      }
+      
+      const action = btn.dataset.action;
+      switch(action) {
+        case 'add-players':
+          switchTab('players');
+          break;
+        case 'start-round':
+          state.round += 1;
+          state.decisions.clear();
+          state.attacksThisRound = [];
+          resultsText.value='';
+          roundNumberEl.textContent = state.round;
+          
+          // تفعيل البطاقات للجولة الجديدة
+          activateCardsForNewRound();
+          
+          renderFastEntryForm();
+          updateDashboard();
+          switchTab('round');
+          break;
+        case 'manage-round':
+          switchTab('round');
+          break;
+        case 'view-points':
+          switchTab('points');
+          break;
+      }
+    });
   });
 
   // وظائف مساعدة عامة
@@ -485,12 +572,50 @@
     Object.keys(sections).forEach(k=>{
       sections[k].style.display = (k===tab?'block':'none');
     });
-    if(tab==='round') { renderDecisionsForm(); roundNumberEl.textContent = state.round; }
+    if(tab==='round') { 
+      renderFastEntryForm();
+      roundNumberEl.textContent = state.round; 
+    }
     if(tab==='points') renderPointsTable();
-    if(tab==='elimination') renderEliminationOptions();
+    if(tab==='dashboard') updateDashboard();
   }
+  
   function cryptoRandomId(){
     return 'p_' + Math.random().toString(36).slice(2,10);
+  }
+
+  // حفظ القرارات من النموذج إلى state.decisions
+  function saveDecisionsFromForm() {
+    fastEntryContainer.querySelectorAll('.fast-entry').forEach(entry=>{
+      const pid = entry.dataset.pid;
+      const action = entry.querySelector('select[data-field="action"]').value;
+      const targetId = entry.querySelector('select[data-field="target"]').value || null;
+      
+      // حفظ فقط إذا كان هناك قيمة محددة (ليست فارغة)
+      if (action || targetId) {
+        state.decisions.set(pid, {action,targetId,announcedAllianceWithId:null,usesCard:null});
+      }
+    });
+  }
+
+  // تحديث لوحة التحكم
+  function updateDashboard(){
+    dashboardPlayerCount.textContent = state.players.length;
+    dashboardRound.textContent = state.round;
+    
+    if(state.players.length > 0) {
+      const topPlayer = state.players.reduce((prev, current) => 
+        (prev.points > current.points) ? prev : current
+      );
+      dashboardTopScore.textContent = topPlayer.points;
+      dashboardTopPlayer.textContent = topPlayer.name;
+    } else {
+      dashboardTopScore.textContent = '0';
+      dashboardTopPlayer.textContent = 'لا يوجد';
+    }
+    
+    const totalCards = state.players.reduce((sum, player) => sum + player.cards.length, 0);
+    dashboardCardsUsed.textContent = totalCards;
   }
 
   // عرض اللاعبين
@@ -512,75 +637,94 @@
     playersCountInfo.textContent = state.players.length ? `عدد اللاعبين: ${state.players.length}` : '';
   }
 
-  // واجهة القرارات
-  function renderDecisionsForm(){
-    decisionsContainer.innerHTML='';
+  // إدخال سريع للقرارات
+  function renderFastEntryForm(){
+    fastEntryContainer.innerHTML='';
     if(state.players.length===0){
-      decisionsContainer.innerHTML='<div class="small muted">أضف لاعبين أولاً.</div>';
+      fastEntryContainer.innerHTML='<div class="small muted">أضف لاعبين أولاً.</div>';
       return;
     }
+    
     state.players.forEach(p=>{
       const targets = state.players.filter(x=>x.id!==p.id);
-      const cardOptions = p.cards.map(c=>`<option value="${c.key}">${c.name}</option>`).join('');
-      const wrapper = document.createElement('div');
-      wrapper.className='card';
-      wrapper.dataset.pid = p.id;
-      wrapper.innerHTML = `
-        <div class="stack" style="justify-content:space-between; margin-bottom:.5rem">
-          <div class="name">${p.name}</div>
-          <div class="tag">النقاط: ${p.points}</div>
-        </div>
-        <div class="row row-2">
-          <div>
-            <label>الإجراء</label>
-            <select data-field="action">
-              <option value="">— اختر —</option>
-              <option value="attack">هجوم</option>
-              <option value="alliance">تحالف</option>
-              <option value="trade">تجارة</option>
-              <option value="betray">خيانة (كان أعلن تحالفًا)</option>
-              <option value="none">لا شيء</option>
-            </select>
-          </div>
-          <div>
-            <label>الهدف/الشريك</label>
-            <select data-field="target">
-              <option value="">— اختر —</option>
-              ${targets.map(t=>`<option value="${t.id}">${t.name}</option>`).join('')}
-            </select>
-          </div>
-        </div>
-        <div class="row" style="margin-top:.5rem">
-          <div>
-            <label>إعلان تحالف علني (اختياري، للتوثيق)</label>
-            <select data-field="announce">
-              <option value="">— لا يوجد —</option>
-              ${targets.map(t=>`<option value="${t.id}">${t.name}</option>`).join('')}
-            </select>
-            <div class="small muted">تفيد لتأكيد شرعية الخيانة إن حدثت.</div>
-          </div>
-        </div>
-        <div class="row row-2" style="margin-top:.5rem">
-          <div>
-            <label>استخدام بطاقة (اختياري)</label>
-            <select data-field="useCard">
-              <option value="">— بدون بطاقة —</option>
-              ${cardOptions || ''}
-            </select>
-            <div class="small muted">${p.cards.length? 'يمكن استخدام بطاقة واحدة فقط لكل جولة.' : 'لا بطاقات متاحة حالياً لهذا اللاعب.'}</div>
-          </div>
-        </div>
+      const entry = document.createElement('div');
+      entry.className='fast-entry';
+      entry.dataset.pid = p.id;
+      entry.innerHTML = `
+        <div class="player-name">${p.name}</div>
+        <select data-field="action">
+          <option value="">— إجراء —</option>
+          <option value="attack">هجوم</option>
+          <option value="alliance">تحالف</option>
+          <option value="trade">تجارة</option>
+          <option value="betray">خيانة</option>
+          <option value="none">لا شيء</option>
+        </select>
+        <select data-field="target">
+          <option value="">— هدف —</option>
+          ${targets.map(t=>`<option value="${t.id}">${t.name}</option>`).join('')}
+        </select>
       `;
-      // ملء القيم المحفوظة سابقًا
+      
+      // ملء القيم المحفوظة سابقًا من state.decisions
       const saved = state.decisions.get(p.id);
       if(saved){
-        wrapper.querySelector('select[data-field="action"]').value = saved.action || '';
-        wrapper.querySelector('select[data-field="target"]').value = saved.targetId || '';
-        wrapper.querySelector('select[data-field="announce"]').value = saved.announcedAllianceWithId || '';
-        wrapper.querySelector('select[data-field="useCard"]').value = saved.usesCard || '';
+        entry.querySelector('select[data-field="action"]').value = saved.action || '';
+        entry.querySelector('select[data-field="target"]').value = saved.targetId || '';
       }
-      decisionsContainer.appendChild(wrapper);
+      
+      // إضافة مستمع حدث لحفظ التغييرات تلقائيًا
+      const actionSelect = entry.querySelector('select[data-field="action"]');
+      const targetSelect = entry.querySelector('select[data-field="target"]');
+      
+      actionSelect.addEventListener('change', () => {
+        state.decisions.set(p.id, {
+          action: actionSelect.value,
+          targetId: targetSelect.value || null,
+          announcedAllianceWithId: null,
+          usesCard: null
+        });
+      });
+      
+      targetSelect.addEventListener('change', () => {
+        state.decisions.set(p.id, {
+          action: actionSelect.value,
+          targetId: targetSelect.value || null,
+          announcedAllianceWithId: null,
+          usesCard: null
+        });
+      });
+      
+      fastEntryContainer.appendChild(entry);
     });
+  }
+
+  // تفعيل البطاقات للجولة الجديدة
+  function activateCardsForNewRound() {
+    const activationLines = [];
+    
+    state.players.forEach(p => {
+      // تفعيل البطاقات المخزنة للجولة الحالية
+      const cardsToActivate = state.cardsToActivate.get(p.id) || [];
+      
+      cardsToActivate.forEach(cardKey => {
+        const card = state.cardsCatalog[cardKey];
+        if (card && !p.cards.some(c => c.key === cardKey)) {
+          p.cards.push(card);
+          activationLines.push(`${p.name} قام بتفعيل ${card.name} (${card.desc})`);
+        }
+      });
+      
+      // مسح البطاقات التي تم تفعيلها
+      state.cardsToActivate.set(p.id, []);
+    });
+    
+    // إضافة معلومات تفعيل البطاقات إلى النتائج إذا كانت هناك جولة سابقة
+    if (activationLines.length > 0 && state.round > 1) {
+      resultsText.value = "تفعيل البطاقات للجولة " + state.round + ":\n" + 
+                         activationLines.join('\n') + "\n\n" + 
+                         (resultsText.value || '');
+    }
   }
 
   // الحساب المنطقي للجولة
@@ -589,27 +733,21 @@
     const alliances = new Map();      // id -> partnerId (إن كان متبادلًا يصبح ناجح)
     const trades = new Map();         // id -> partnerId (إن كانت متبادلة تصبح ناجحة)
     const attacks = [];               // {attackerId,targetId}
-    const betrays = [];               // {betrayerId,targetId,validPublic}
-    const shieldsUsed = new Set();    // playerId
-    const doubleAttackUsed = new Set();
-    const doubleTradeUsed = new Set();
+    const betrays = [];               // {betrayerId,targetId}
+    const shieldsUsed = new Set();    // playerId (البطاقات المستخدمة تلقائيًا)
+    const doubleAttackUsed = new Set(); // playerId (البطاقات المستخدمة تلقائيًا)
+    const doubleTradeUsed = new Set();  // playerId (البطاقات المستخدمة تلقائيًا)
     const textLines = [`الجولة ${state.round}:`];
+
+    // تطبيق البطاقات التلقائية أولاً
+    applyAutomaticCards(playersById, shieldsUsed, doubleAttackUsed, doubleTradeUsed, textLines);
 
     // تجميع القرارات
     state.decisions.forEach((d, pid)=>{
       const p = playersById[pid];
       if(!p) return;
       const targetName = d.targetId ? playersById[d.targetId]?.name : '';
-      // بطاقات مستخدمة
-      if(d.usesCard){
-        switch(d.usesCard){
-          case 'shield': shieldsUsed.add(pid); break;
-          case 'doubleAttack': doubleAttackUsed.add(pid); break;
-          case 'doubleTrade': doubleTradeUsed.add(pid); break;
-          case 'reveal': break;
-          case 'goldenBetrayal': break;
-        }
-      }
+      
       // الإجراءات
       if(d.action==='alliance' && d.targetId){
         alliances.set(pid, d.targetId);
@@ -621,10 +759,9 @@
         attacks.push({attackerId:pid, targetId:d.targetId});
         textLines.push(`${p.name} هاجم ${targetName}.`);
       } else if(d.action==='betray' && d.targetId){
-        const validPublic = (d.announcedAllianceWithId === d.targetId && !!d.announcedAllianceWithId);
-        betrays.push({betrayerId:pid, targetId:d.targetId, validPublic});
+        betrays.push({betrayerId:pid, targetId:d.targetId});
         attacks.push({attackerId:pid, targetId:d.targetId});
-        textLines.push(`${p.name} خان التحالف المُعلن ضد ${targetName} وهاجمه.`);
+        textLines.push(`${p.name} خان ${targetName} وهاجمه.`);
       } else if(d.action==='none'){
         textLines.push(`${p.name} لم يتخذ إجراءً.`);
       }
@@ -672,7 +809,9 @@
     const printedAlliances = new Set();
     successfulAlliances.forEach((partner,id)=>{
       if(printedAlliances.has(id) || printedAlliances.has(partner)) return;
-      detailedLines.push(`تحالف ناجح بين ${playersById[id].name} و${playersById[partner].name} (1 نقطة لكل منهما).`);
+      const tradePoints1 = (doubleTradeUsed.has(id)?2:1);
+      const tradePoints2 = (doubleTradeUsed.has(partner)?2:1);
+      detailedLines.push(`تحالف ناجح بين ${playersById[id].name} و${playersById[partner].name} (${tradePoints1} نقطة لـ ${playersById[id].name}، و${tradePoints2} نقطة لـ ${playersById[partner].name}).`);
       printedAlliances.add(id); printedAlliances.add(partner);
     });
     // التجارة الناجحة
@@ -690,7 +829,7 @@
       const attacker = playersById[res.attackerId].name;
       const target = playersById[res.targetId].name;
       if(res.success){
-        detailedLines.push(`هجوم ناجح: ${attacker} على ${target} (+${res.pointsAwarded} نقاط).`);
+        detailedLines.push(`هجوم ناجح: ${attacker} على ${target} (+${res.pointsAwarded} نقاط${doubleAttackUsed.has(res.attackerId) ? ' باستخدام بطاقة الهجوم المضاعف' : ''}).`);
       } else {
         detailedLines.push(`هجوم فاشل: ${attacker} على ${target} (${res.reason}).`);
       }
@@ -699,24 +838,18 @@
     // حفظ لتقييم الإقصاء التلقائي (هجومان على نفس الهدف)
     state.attacksThisRound = attackResults.map(r=>({attackerId:r.attackerId,targetId:r.targetId,success:r.success}));
 
-    // منح الخيانة الذهبية
-    const goldenWinners = [];
+    // منح بطاقة الكشف للخونة الناجحين
+    const revealWinners = [];
     betrays.forEach(b=>{
-      if(!b.validPublic) return;
-      const found = attackResults.find(r=>r.attackerId===b.betrayerId && r.targetId===b.targetId && r.success);
-      if(found) goldenWinners.push(b.betrayerId);
-      else {
-        // سجّل خيانة فاشلة لهذه الجولة
-        const player = playersById[b.betrayerId];
-        player.history.failedBetrayRounds.push(state.round);
-        // احتفاظ فقط بآخر 3 جولات
-        if(player.history.failedBetrayRounds.length>3){
-          player.history.failedBetrayRounds = player.history.failedBetrayRounds.slice(-3);
-        }
+      // تحقق مما إذا كان الهدف قد اختار تحالف مع الخائن
+      const targetChoseAlliance = alliances.get(b.targetId) === b.betrayerId;
+      if(targetChoseAlliance){
+        const found = attackResults.find(r=>r.attackerId===b.betrayerId && r.targetId===b.targetId && r.success);
+        if(found) revealWinners.push(b.betrayerId);
       }
     });
-    goldenWinners.forEach(id=>{
-      detailedLines.push(`بطاقة الخيانة الذهبية: ${playersById[id].name} حصل عليها لخيانة مُعلنة مع هجوم ناجح.`);
+    revealWinners.forEach(id=>{
+      detailedLines.push(`بطاقة الكشف: ${playersById[id].name} حصل عليها لخيانة ناجحة ضد لاعب كان قد اختار التحالف معه.`);
     });
 
     const text = [...textLines, '', ...detailedLines].join('\n');
@@ -728,8 +861,63 @@
       shieldsUsed,
       doubleAttackUsed,
       doubleTradeUsed,
-      goldenWinners
+      revealWinners
     };
+  }
+
+  // تطبيق البطاقات التلقائية
+  function applyAutomaticCards(playersById, shieldsUsed, doubleAttackUsed, doubleTradeUsed, textLines) {
+    const cardActivationLines = [];
+    
+    state.players.forEach(p => {
+      // التحقق من البطاقات التي يمتلكها اللاعب وتطبيقها تلقائيًا
+      p.cards.forEach(card => {
+        switch(card.key) {
+          case 'shield':
+            // بطاقة الحصانة: تمنع أول هجوم ضد اللاعب في هذه الجولة
+            shieldsUsed.add(p.id);
+            cardActivationLines.push(`${p.name} يستخدم بطاقة الحصانة تلقائيًا (ستمنع أول هجوم ضده).`);
+            // إزالة البطاقة بعد استخدامها
+            p.cards = p.cards.filter(c => c.key !== 'shield');
+            break;
+            
+          case 'doubleAttack':
+            // بطاقة الهجوم المضاعف: تضاعف نقاط الهجوم إذا اختار اللاعب هجومًا أو خيانة
+            const playerDecision = state.decisions.get(p.id);
+            if (playerDecision && (playerDecision.action === 'attack' || playerDecision.action === 'betray')) {
+              doubleAttackUsed.add(p.id);
+              cardActivationLines.push(`${p.name} يستخدم بطاقة الهجوم المضاعف تلقائيًا (ستضاعف نقاط هجومه).`);
+              // إزالة البطاقة بعد استخدامها
+              p.cards = p.cards.filter(c => c.key !== 'doubleAttack');
+            }
+            break;
+            
+          case 'doubleTrade':
+            // بطاقة التاجر: تضاعف نقاط التجارة إذا اختار اللاعب تجارة
+            const tradeDecision = state.decisions.get(p.id);
+            if (tradeDecision && tradeDecision.action === 'trade') {
+              doubleTradeUsed.add(p.id);
+              cardActivationLines.push(`${p.name} يستخدم بطاقة التاجر تلقائيًا (ستضاعف نقاط تجارته).`);
+              // إزالة البطاقة بعد استخدامها
+              p.cards = p.cards.filter(c => c.key !== 'doubleTrade');
+            }
+            break;
+            
+          case 'reveal':
+            // بطاقة الكشف: تُستخدم خارج اللعبة وتُستهلك تلقائيًا في الجولة التالية
+            cardActivationLines.push(`${p.name} يمتلك بطاقة الكشف (يمكنه سؤال المضيف عن قرار أي لاعب في الخاص).`);
+            // إزالة البطاقة بعد الجولة
+            p.cards = p.cards.filter(c => c.key !== 'reveal');
+            break;
+        }
+      });
+    });
+    
+    // إضافة معلومات تفعيل البطاقات إلى النتائج
+    if (cardActivationLines.length > 0) {
+      textLines.push('', 'تفعيل البطاقات التلقائي:');
+      cardActivationLines.forEach(line => textLines.push(line));
+    }
   }
 
   // تطبيق النقاط
@@ -742,8 +930,10 @@
     const countedAlliances = new Set();
     calc.successfulAlliances.forEach((partner,id)=>{
       if(countedAlliances.has(id) || countedAlliances.has(partner)) return;
-      byId[id].points += 1;
-      byId[partner].points += 1;
+      const pts1 = calc.doubleTradeUsed.has(id) ? 2 : 1;
+      const pts2 = calc.doubleTradeUsed.has(partner) ? 2 : 1;
+      byId[id].points += pts1;
+      byId[partner].points += pts2;
       byId[id].loyalAlliances += 1;
       byId[partner].loyalAlliances += 1;
       countedAlliances.add(id); countedAlliances.add(partner);
@@ -773,38 +963,47 @@
       if(didAttackSuccess.get(p.id)) p.streakAttack += 1;
       else p.streakAttack = 0;
     });
-
-    // استهلاك البطاقات المستخدمة
-    state.decisions.forEach((d, pid)=>{
-      if(!d.usesCard) return;
-      const p = byId[pid];
-      const idx = p.cards.findIndex(c=>c.key===d.usesCard);
-      if(idx>=0 && ['shield','doubleAttack','doubleTrade','reveal'].includes(d.usesCard)){
-        p.cards.splice(idx,1);
-      }
-    });
-
-    // إضافة الخيانة الذهبية المكتسبة
-    calc.goldenWinners.forEach(pid=>{
-      const p = byId[pid];
-      const has = p.cards.some(c=>c.key==='goldenBetrayal');
-      if(!has) p.cards.push(state.cardsCatalog.goldenBetrayal);
-    });
   }
 
   // منح البطاقات بالإنجاز
   function awardCards(calc){
+    const newCardsLines = [];
     state.players.forEach(p=>{
-      if(p.streakAttack>=2 && !p.cards.some(c=>c.key==='doubleAttack')){
-        p.cards.push(state.cardsCatalog.doubleAttack);
+      if(p.streakAttack>=2 && !state.cardsToActivate.get(p.id)?.includes('doubleAttack')){
+        // تخزين البطاقة للتفعيل في الجولة التالية
+        if (!state.cardsToActivate.has(p.id)) state.cardsToActivate.set(p.id, []);
+        state.cardsToActivate.get(p.id).push('doubleAttack');
+        newCardsLines.push(`${p.name} سيحصل على بطاقة الهجوم المضاعف في الجولة التالية لتنفيذ هجومين ناجحين متتاليين.`);
       }
-      if(p.loyalAlliances>=2 && !p.cards.some(c=>c.key==='shield')){
-        p.cards.push(state.cardsCatalog.shield);
+      if(p.loyalAlliances>=2 && !state.cardsToActivate.get(p.id)?.includes('shield')){
+        // تخزين البطاقة للتفعيل في الجولة التالية
+        if (!state.cardsToActivate.has(p.id)) state.cardsToActivate.set(p.id, []);
+        state.cardsToActivate.get(p.id).push('shield');
+        newCardsLines.push(`${p.name} سيحصل على بطاقة الحصانة في الجولة التالية لإبرام تحالفين ناجحين.`);
       }
-      if(p.tradeCount>=3 && !p.cards.some(c=>c.key==='doubleTrade')){
-        p.cards.push(state.cardsCatalog.doubleTrade);
+      if(p.tradeCount>=3 && !state.cardsToActivate.get(p.id)?.includes('doubleTrade')){
+        // تخزين البطاقة للتفعيل في الجولة التالية
+        if (!state.cardsToActivate.has(p.id)) state.cardsToActivate.set(p.id, []);
+        state.cardsToActivate.get(p.id).push('doubleTrade');
+        newCardsLines.push(`${p.name} سيحصل على بطاقة التاجر في الجولة التالية لإتمام ثلاث صفقات تجارية ناجحة.`);
       }
     });
+    
+    // منح بطاقات الكشف للخونة الناجحين
+    calc.revealWinners.forEach(id=>{
+      const p = state.players.find(player => player.id === id);
+      if (p && !state.cardsToActivate.get(p.id)?.includes('reveal')) {
+        // تخزين البطاقة للتفعيل في الجولة التالية
+        if (!state.cardsToActivate.has(p.id)) state.cardsToActivate.set(p.id, []);
+        state.cardsToActivate.get(p.id).push('reveal');
+        newCardsLines.push(`${p.name} سيحصل على بطاقة الكشف في الجولة التالية لخيانة ناجحة ضد لاعب كان قد اختار التحالف معه.`);
+      }
+    });
+    
+    // إضافة معلومات البطاقات المكتسبة حديثًا إلى النتائج
+    if (newCardsLines.length > 0) {
+      resultsText.value += "\n\nالبطاقات التي سيحصل عليها اللاعبون في الجولة التالية:\n" + newCardsLines.join('\n');
+    }
   }
 
   // جدول النقاط والبطاقات
@@ -820,129 +1019,53 @@
         <td>${p.loyalAlliances}</td>
         <td>${p.tradeCount}</td>
         <td>${cardsText}</td>
-        <td>
-          <select data-card>
-            <option value="">— اختر بطاقة —</option>
-            ${p.cards.map(c=>`<option value="${c.key}">${c.name}</option>`).join('')}
-          </select>
-          <button class="btn warn" data-use>تفعيل</button>
-        </td>
       `;
-      const sel = tr.querySelector('select[data-card]');
-      const btn = tr.querySelector('button[data-use]');
-      btn.addEventListener('click', ()=>{
-        const key = sel.value;
-        if(!key) return alert('اختر بطاقة لاستخدامها.');
-        const existing = state.decisions.get(p.id) || {action:'none',targetId:null,announcedAllianceWithId:null,usesCard:null};
-        existing.usesCard = key;
-        state.decisions.set(p.id, existing);
-        alert('تم تعيين استخدام البطاقة لهذه الجولة. سيتم تطبيقها عند إعلان النتائج.');
-        renderDecisionsForm();
-      });
       pointsTableBody.appendChild(tr);
     });
   }
 
-  // الإقصاء: واجهة المرشحين
-  function renderEliminationOptions(){
-    // ملء قائمة المرشحين
-    elimCandidateSel.innerHTML = `<option value="">— اختر لاعبًا (للمعايير اليدوية) —</option>`;
-    state.players.forEach(p=>{
-      const opt = document.createElement('option');
-      opt.value = p.id;
-      opt.textContent = p.name;
-      elimCandidateSel.appendChild(opt);
-    });
-  }
-
-  // تنفيذ الإقصاء وفق المعايير
-  function performElimination(){
-    const criterion = elimCriterionSel.value;
-
-    // بناء خريطة id->player
+  // الإقصاء التلقائي
+  function performAutoElimination(){
+    const eliminationLines = [];
     const byId = Object.fromEntries(state.players.map(p=>[p.id,p]));
 
-    // 1) تلقائي: هجومان ناجحان في نفس الجولة ضد نفس اللاعب
-    if(criterion==='auto'){
-      const successAttacks = state.attacksThisRound.filter(a=>a.success);
-      const targetsCount = {};
-      successAttacks.forEach(a=>{
-        targetsCount[a.targetId] = (targetsCount[a.targetId]||0)+1;
-      });
-      const doomed = Object.entries(targetsCount).find(([tid,count])=>count>=2);
-      if(doomed){
-        const targetId = doomed[0];
-        const name = byId[targetId]?.name || 'لاعب';
-        removePlayerById(targetId);
-        return `تم إقصاء ${name} لتعرضه لهجومين ناجحين في نفس الجولة.`;
-      }
-      return '';
-    }
+    // 1) الإقصاء بسبب هجومين ناجحين أو أكثر في نفس الجولة
+    const successAttacks = state.attacksThisRound.filter(a=>a.success);
+    const targetsCount = {};
+    successAttacks.forEach(a=>{
+      targetsCount[a.targetId] = (targetsCount[a.targetId]||0)+1;
+    });
+    
+    const attackedPlayers = Object.entries(targetsCount).filter(([tid,count])=>count>=2);
+    attackedPlayers.forEach(([targetId, count])=>{
+      const name = byId[targetId]?.name || 'لاعب';
+      eliminationLines.push(`تم إقصاء ${name} لتعرضه لـ ${count} هجوم(ات) ناجح(ة) في نفس الجولة.`);
+      removePlayerById(targetId);
+    });
 
-    // 2) الأقل نقاطًا لجولتين متتاليتين
-    if(criterion==='lowestTwoRounds'){
-      if(state.lastRoundPointsSnapshot.size===0){
-        return 'لا يمكن تطبيق هذا المعيار الآن: لا توجد بيانات الجولة السابقة.';
-      }
-      // ابحث عن أقل نقاط في الجولة السابقة والحالية
+    // 2) الإقصاء بسبب الأقل نقاطًا في جولتين متتاليتين (بدءًا من الجولة الثانية)
+    if (state.round >= 2 && state.lastRoundPointsSnapshot.size > 0) {
       const prevMin = Math.min(...Array.from(state.lastRoundPointsSnapshot.values()));
-      const prevIds = Array.from(state.lastRoundPointsSnapshot.entries()).filter(([id,pts])=>pts===prevMin).map(([id])=>id);
+      const prevIds = Array.from(state.lastRoundPointsSnapshot.entries())
+        .filter(([id,pts])=>pts===prevMin)
+        .map(([id])=>id);
+      
       const currentMin = Math.min(...state.players.map(p=>p.points));
       const currentIds = state.players.filter(p=>p.points===currentMin).map(p=>p.id);
-      // تقاطع
+      
+      // تقاطع: اللاعبون الذين كانوا الأقل نقاطًا في الجولة السابقة والحالية
       const intersection = prevIds.filter(id=>currentIds.includes(id));
-      if(intersection.length===1){
-        const targetId = intersection[0];
-        const name = byId[targetId]?.name || 'لاعب';
-        removePlayerById(targetId);
-        return `تم إقصاء ${name} كونه الأقل نقاطًا في جولتين متتاليتين.`;
-      } else if(intersection.length>1){
-        return 'تعادل اللاعبون الأقل نقاطًا في جولتين؛ يُلغى الإقصاء أو احسمه بمواجهة كلامية قصيرة.';
-      } else {
-        return 'لا أحد كان الأقل نقاطًا في جولتين متتاليتين؛ لا إقصاء بهذا المعيار.';
+      
+      if(intersection.length > 0){
+        const names = intersection.map(id => byId[id]?.name).join('، ');
+        eliminationLines.push(`تم إقصاء ${names} لكونهم الأقل نقاطًا في جولتين متتاليتين.`);
+        
+        // إزالة جميع اللاعبين المتعادلين في القاع
+        intersection.forEach(id => removePlayerById(id));
       }
     }
 
-    // 3) خيانة مُعلنة فاشلة مرتين خلال ثلاث جولات
-    if(criterion==='failedBetrayTwice'){
-      let candidate = elimCandidateSel.value || '';
-      if(!candidate){
-        // بحث تلقائي عن لاعب يستوفي الشرط
-        const found = state.players.find(p=>{
-          const arr = p.history.failedBetrayRounds || [];
-          // خلال آخر ثلاث جولات، هل يوجد جولتان فشل؟
-          return arr.length>=2;
-        });
-        candidate = found?.id || '';
-      }
-      if(!candidate) return 'لا يوجد لاعب يستوفي شرط خيانتين فاشلتين خلال ثلاث جولات.';
-      const player = byId[candidate];
-      const arr = player.history.failedBetrayRounds || [];
-      if(arr.length>=2){
-        const name = player.name;
-        removePlayerById(player.id);
-        return `تم إقصاء ${name} بعد خيانتين مُعلنتين فاشلتين خلال ثلاث جولات.`;
-      } else {
-        return 'اللاعب المحدد لا يستوفي شرط خيانتين فاشلتين.';
-      }
-    }
-
-    // 4) تصويت محدود (يدوي): يعتمد على اختيار مرشح
-    if(criterion==='manualVote'){
-      const targetId = elimCandidateSel.value;
-      if(!targetId) return 'اختر لاعبًا كمرشح للإقصاء ثم نفّذ القرار وفق التصويت في الغرفة.';
-      const name = byId[targetId]?.name || 'لاعب';
-      // لا نحذفه مباشرةً إلا إذا أردت تنفيذ التصويت يدويًا
-      const confirmVote = confirm(`هل تأكد التصويت لإقصاء ${name}؟`);
-      if(confirmVote){
-        removePlayerById(targetId);
-        return `تم إقصاء ${name} عبر تصويت محدود بعد تعليل مقنع.`;
-      } else {
-        return 'تم إلغاء الإقصاء اليدوي.';
-      }
-    }
-
-    return '';
+    return eliminationLines.length > 0 ? "نتائج الإقصاء التلقائي:\n" + eliminationLines.join('\n') : "";
   }
 
   // إزالة لاعب عبر id
@@ -956,16 +1079,14 @@
         if(d.targetId===removed.id) d.targetId = null;
         if(d.announcedAllianceWithId===removed.id) d.announcedAllianceWithId = null;
       });
-      // يمكن هنا تطبيق منطق "بنك المشرف" لسحب بطاقة عشوائية من المُقصى وإتاحتها لاحقًا
-      // (اختياري: حسب تفضيلك)
+      // تنظيف البطاقات المخزنة
+      state.cardsToActivate.delete(removed.id);
     }
   }
 
-  // عرض نقاط/بطاقات/تفعيل
-  // (تم أعلاه)
-
   // بداية
   renderPlayersList();
+  updateDashboard();
 
 })();
 </script>
